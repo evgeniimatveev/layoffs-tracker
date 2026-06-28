@@ -8,17 +8,20 @@ Interactive dashboard tracking tech industry layoffs from 2020 to 2025, built wi
 
 ## Screenshots
 
-| Overview & KPIs | Layoffs Over Time |
-|---|---|
-| ![Overview](assets/screenshots/dashboard_overview.png) | ![Timeline](assets/screenshots/timeline.png) |
+![Overview](assets/screenshots/dashboard_overview.png)
 
-| By Industry & Top Companies | Global Map |
-|---|---|
-| ![Industry](assets/screenshots/by_industry.png) | ![Map](assets/screenshots/global_map.png) |
+<details>
+<summary>📸 View all screenshots</summary>
 
-| Raw Data Explorer |
-|---|
-| ![Raw Data](assets/screenshots/raw_data.png) |
+| Layoffs Over Time | By Industry & Top Companies |
+|---|---|
+| ![Timeline](assets/screenshots/timeline.png) | ![Industry](assets/screenshots/by_industry.png) |
+
+| Global Map | Raw Data |
+|---|---|
+| ![Map](assets/screenshots/global_map.png) | ![Raw Data](assets/screenshots/raw_data.png) |
+
+</details>
 
 ---
 
