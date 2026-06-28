@@ -1,0 +1,60 @@
+name: Weekly Data Refresh
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"   # every Monday 06:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install uv && uv pip install --system -r requirements.txt
+
+      - name: Download & ingest data
+        env:
+          KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+          KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+        run: python ingest.py
+
+      - name: Commit updated DB
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/layoffs.duckdb
+          git diff --staged --quiet || git commit -m "chore: weekly data refresh $(date -u +%Y-%m-%d)"
+          git push
+
+      - name: Push to HuggingFace Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          pip install huggingface_hub
+          python - <<'EOF'
+          import os
+          from huggingface_hub import HfApi
+          api = HfApi()
+          api.upload_folder(
+              folder_path=".",
+              repo_id="evgeniimatveev/layoffs-tracker",
+              repo_type="space",
+              token=os.environ["HF_TOKEN"],
+              ignore_patterns=[".git/*", ".github/*", "data/raw/*", "__pycache__/*", ".venv/*"],
+          )
+          print("Pushed to HuggingFace Space")
+          EOF
+
+      - name: Summary
+        run: |
+          echo "## Layoffs Tracker refreshed" >> $GITHUB_STEP_SUMMARY
+          echo "Updated: $(date -u +%Y-%m-%d)" >> $GITHUB_STEP_SUMMARY

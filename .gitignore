@@ -1,0 +1,8 @@
+data/raw/
+*.zip
+__pycache__/
+.env
+.kaggle/
+*.pyc
+.venv/
+fix_db.py
