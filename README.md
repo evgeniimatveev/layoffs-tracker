@@ -6,6 +6,22 @@ Interactive dashboard tracking tech industry layoffs from 2020 to 2025, built wi
 
 ---
 
+## Screenshots
+
+| Overview & KPIs | Layoffs Over Time |
+|---|---|
+| ![Overview](assets/screenshots/dashboard_overview.png) | ![Timeline](assets/screenshots/timeline.png) |
+
+| By Industry & Top Companies | Global Map |
+|---|---|
+| ![Industry](assets/screenshots/by_industry.png) | ![Map](assets/screenshots/global_map.png) |
+
+| Raw Data Explorer |
+|---|
+| ![Raw Data](assets/screenshots/raw_data.png) |
+
+---
+
 ## What's inside
 
 **2,412 layoff events** across **1,713 companies** in **49 countries** — every record sourced from layoffs.fyi, the definitive tracker of tech layoffs since COVID-19.
@@ -25,17 +41,33 @@ All sections respond to sidebar filters: year, industry, country.
 
 ---
 
+## Architecture
+
+```mermaid
+flowchart LR
+    A["🌐 layoffs.fyi\npublic dataset"] -->|Kaggle API| B["📥 ingest.py\nPython · pandas"]
+    B -->|cleaned data| C[("🦆 DuckDB\nlayoffs.duckdb")]
+    C -->|SQL queries| D["📊 app.py\nStreamlit"]
+    D -->|deploy| E["☁️ Streamlit Cloud\nlive dashboard"]
+    F["⏰ GitHub Actions\nweekly cron"] -->|triggers| B
+
+    style A fill:#e74c3c,color:#fff,stroke:none
+    style C fill:#1abc9c,color:#fff,stroke:none
+    style D fill:#3498db,color:#fff,stroke:none
+    style E fill:#9b59b6,color:#fff,stroke:none
+    style F fill:#e67e22,color:#fff,stroke:none
+```
+
 ## Tech stack
 
-```
-layoffs.fyi (via Kaggle dataset)
-    → Python + pandas
-    → DuckDB
-    → Streamlit
-    → Streamlit Community Cloud
-```
-
-GitHub Actions refreshes data every Monday via Kaggle API.
+| Layer | Tool |
+|---|---|
+| Data source | layoffs.fyi via Kaggle dataset |
+| Ingestion | Python + pandas (`ingest.py`) |
+| Storage | DuckDB (embedded, file-based) |
+| Dashboard | Streamlit + Plotly |
+| Hosting | Streamlit Community Cloud |
+| Automation | GitHub Actions (weekly refresh) |
 
 ---
 
