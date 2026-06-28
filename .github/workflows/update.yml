@@ -35,25 +35,6 @@ jobs:
           git diff --staged --quiet || git commit -m "chore: weekly data refresh $(date -u +%Y-%m-%d)"
           git push
 
-      - name: Push to HuggingFace Space
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: |
-          pip install huggingface_hub
-          python - <<'EOF'
-          import os
-          from huggingface_hub import HfApi
-          api = HfApi()
-          api.upload_folder(
-              folder_path=".",
-              repo_id="evgeniimatveevusa/layoffs-tracker",
-              repo_type="space",
-              token=os.environ["HF_TOKEN"],
-              ignore_patterns=[".git/*", ".github/*", "data/raw/*", "__pycache__/*", ".venv/*"],
-          )
-          print("Pushed to HuggingFace Space")
-          EOF
-
       - name: Summary
         run: |
           echo "## Layoffs Tracker refreshed" >> $GITHUB_STEP_SUMMARY
