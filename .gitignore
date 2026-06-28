@@ -6,3 +6,6 @@ __pycache__/
 *.pyc
 .venv/
 fix_db.py
+create_space.py
+push_to_hf.py
+Dockerfile
