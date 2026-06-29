@@ -1,0 +1,27 @@
+name: Streamlit Keepalive
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'  # every 30 minutes
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping all Streamlit apps
+        run: |
+          URLS=(
+            "https://4cmjubresrab8nk6zhjqbv.streamlit.app"
+            "https://crypto-onchain-dashboard.streamlit.app"
+            "https://layoffs-tracker-mdndinr8hfct5afvjwvjno.streamlit.app"
+            "https://weather-pip-y645txqohstehewa3d3a4w.streamlit.app"
+          )
+          for url in "${URLS[@]}"; do
+            echo "Pinging $url"
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+              -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" \
+              -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" \
+              -L --max-time 30 "$url" || echo "000")
+            echo "  -> HTTP $STATUS"
+          done
