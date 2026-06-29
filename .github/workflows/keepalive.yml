@@ -9,19 +9,50 @@ jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping all Streamlit apps
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Cache Playwright Chromium
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}
+
+      - name: Install Playwright
         run: |
-          URLS=(
-            "https://4cmjubresrab8nk6zhjqbv.streamlit.app"
-            "https://crypto-onchain-dashboard.streamlit.app"
-            "https://layoffs-tracker-mdndinr8hfct5afvjwvjno.streamlit.app"
-            "https://weather-pip-y645txqohstehewa3d3a4w.streamlit.app"
-          )
-          for url in "${URLS[@]}"; do
-            echo "Pinging $url"
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-              -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" \
-              -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" \
-              --max-time 30 "$url")
-            echo "  -> HTTP $STATUS"
-          done
+          npm install playwright
+          npx playwright install chromium --with-deps
+
+      - name: Write ping script
+        run: |
+          cat << 'EOF' > ping.js
+          const { chromium } = require('playwright');
+
+          const URLS = [
+            'https://4cmjubresrab8nk6zhjqbv.streamlit.app',
+            'https://crypto-onchain-dashboard.streamlit.app',
+            'https://layoffs-tracker-mdndinr8hfct5afvjwvjno.streamlit.app',
+            'https://weather-pip-y645txqohstehewa3d3a4w.streamlit.app',
+          ];
+
+          (async () => {
+            const browser = await chromium.launch();
+            for (const url of URLS) {
+              const page = await browser.newPage();
+              try {
+                const res = await page.goto(url, { waitUntil: 'load', timeout: 60000 });
+                // hold 3s so WebSocket connection establishes
+                await new Promise(r => setTimeout(r, 3000));
+                console.log(`OK  ${url} -> HTTP ${res.status()}`);
+              } catch (e) {
+                console.log(`ERR ${url} -> ${e.message.split('\n')[0]}`);
+              }
+              await page.close();
+            }
+            await browser.close();
+          })();
+          EOF
+
+      - name: Ping all Streamlit apps
+        run: node ping.js
