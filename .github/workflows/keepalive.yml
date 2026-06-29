@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Cache Playwright Chromium
         uses: actions/cache@v4
@@ -42,7 +42,6 @@ jobs:
               const page = await browser.newPage();
               try {
                 const res = await page.goto(url, { waitUntil: 'load', timeout: 60000 });
-                // hold 3s so WebSocket connection establishes
                 await new Promise(r => setTimeout(r, 3000));
                 console.log(`OK  ${url} -> HTTP ${res.status()}`);
               } catch (e) {
