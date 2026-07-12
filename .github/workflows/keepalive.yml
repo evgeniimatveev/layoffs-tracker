@@ -34,6 +34,7 @@ jobs:
             'https://crypto-onchain-dashboard.streamlit.app',
             'https://layoffs-tracker-mdndinr8hfct5afvjwvjno.streamlit.app',
             'https://weather-pip-y645txqohstehewa3d3a4w.streamlit.app',
+            'https://route-optimization-vrp.streamlit.app',
           ];
 
           (async () => {
