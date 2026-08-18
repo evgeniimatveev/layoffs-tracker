@@ -26,7 +26,7 @@ jobs:
 
       - name: Write ping script
         run: |
-          cat << 'EOF' > ping.js
+          cat << 'EOF2' > ping.js
           const { chromium } = require('playwright');
 
           const URLS = [
@@ -35,6 +35,7 @@ jobs:
             'https://layoffs-tracker-mdndinr8hfct5afvjwvjno.streamlit.app',
             'https://weather-pip-y645txqohstehewa3d3a4w.streamlit.app',
             'https://route-optimization-vrp.streamlit.app',
+            'https://ljtn7jxeawyetzefthttnc.streamlit.app',
           ];
 
           (async () => {
@@ -52,7 +53,7 @@ jobs:
             }
             await browser.close();
           })();
-          EOF
+          EOF2
 
       - name: Ping all Streamlit apps
         run: node ping.js
