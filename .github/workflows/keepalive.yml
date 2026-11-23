@@ -36,6 +36,7 @@ jobs:
             'https://weather-pip-y645txqohstehewa3d3a4w.streamlit.app',
             'https://route-optimization-vrp.streamlit.app',
             'https://ljtn7jxeawyetzefthttnc.streamlit.app',
+            'https://uber-driver-analytics.streamlit.app',
           ];
 
           (async () => {
