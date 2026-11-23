@@ -29,7 +29,8 @@ jobs:
           cat << 'EOF2' > ping.js
           const { chromium } = require('playwright');
 
-          const URLS = [
+          // PING_URLS (comma-separated) overrides the list - used only for local testing.
+          const URLS = process.env.PING_URLS ? process.env.PING_URLS.split(',') : [
             'https://4cmjubresrab8nk6zhjqbv.streamlit.app',
             'https://crypto-onchain-dashboard.streamlit.app',
             'https://layoffs-tracker-mdndinr8hfct5afvjwvjno.streamlit.app',
@@ -39,8 +40,29 @@ jobs:
             'https://uber-driver-analytics.streamlit.app',
           ];
 
+          // A crashed Streamlit app still answers HTTP 200, so the status code alone is not
+          // enough. These phrases / elements show up when the script or process is dead.
+          // Only a fixed label is logged (never the page text): this repo is public and an
+          // exception message could contain hostnames or other internals.
+          const CRASH_TEXT = /Oh no\.|Error running app|This app has encountered an error/i;
+
+          async function crashReason(page) {
+            // Streamlit Cloud renders the app inside an iframe, so check every frame.
+            for (const frame of page.frames()) {
+              try {
+                if (await frame.locator('[data-testid="stException"]').count() > 0) {
+                  return 'uncaught exception rendered on page';
+                }
+                const text = await frame.locator('body').innerText({ timeout: 3000 });
+                if (CRASH_TEXT.test(text)) return 'error page shown (app not running)';
+              } catch (_) { /* detached or cross-origin frame - ignore */ }
+            }
+            return null;
+          }
+
           (async () => {
             const browser = await chromium.launch();
+            const crashed = [];
             for (const url of URLS) {
               const page = await browser.newPage();
               try {
@@ -48,14 +70,30 @@ jobs:
                 await new Promise(r => setTimeout(r, 3000));
 
                 const wakeButton = page.getByRole('button', { name: /get this app back up/i });
+                let state = `OK     ${url} -> HTTP ${res.status()}`;
                 if (await wakeButton.count() > 0) {
                   console.log(`ASLEEP ${url} -> clicking wake button...`);
                   await wakeButton.click();
                   await page.waitForTimeout(20000);
                   const stillAsleep = await wakeButton.count() > 0;
-                  console.log(stillAsleep ? `STILL ASLEEP ${url} (may need another run)` : `WOKE   ${url}`);
+                  state = stillAsleep ? `STILL ASLEEP ${url} (may need another run)` : `WOKE   ${url}`;
+                }
+
+                // Give the app time to render, then look for crash signs. Re-check once after
+                // a reload so a half-rendered page is not reported as a crash.
+                await page.waitForTimeout(8000);
+                let reason = await crashReason(page);
+                if (reason) {
+                  await page.reload({ waitUntil: 'load', timeout: 60000 });
+                  await page.waitForTimeout(12000);
+                  reason = await crashReason(page);
+                }
+                if (reason) {
+                  console.log(`CRASHED ${url} -> ${reason}`);
+                  console.log(`::error title=Streamlit app crashed::${url} - ${reason}. Open Manage app, copy the logs, then Reboot.`);
+                  crashed.push(url);
                 } else {
-                  console.log(`OK     ${url} -> HTTP ${res.status()}`);
+                  console.log(state);
                 }
               } catch (e) {
                 console.log(`ERR    ${url} -> ${e.message.split('\n')[0]}`);
@@ -63,6 +101,10 @@ jobs:
               await page.close();
             }
             await browser.close();
+            if (crashed.length) {
+              console.log(`\n${crashed.length} app(s) crashed: ${crashed.join(', ')}`);
+              process.exit(1);
+            }
           })();
           EOF2
 
